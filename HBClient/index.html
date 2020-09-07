@@ -1,0 +1,311 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>充值</title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="css/mui.min.css" rel="stylesheet" />
+		<style type="text/css">
+			body {
+				background: white;
+			}
+			
+			.mui-bar {
+				background: #2984D1;
+			}
+			
+			a {
+				color: white;
+			}
+			
+			p {
+				background-color: transparent;
+				color: black;
+				margin-bottom: 0;
+			}
+			
+			.mui-content {
+				background-color: transparent;
+			}
+			
+			.mui-btn-block {
+				width: 96%;
+				margin-left: 2%;
+				font-family: "微软雅黑";
+				position: absolute;
+				bottom: 10px;
+			}
+			
+			.mui-title {
+				text-indent: 30px;
+			}
+			
+			input[type=color],
+			input[type=date],
+			input[type=datetime-local],
+			input[type=datetime],
+			input[type=email],
+			input[type=month],
+			input[type=number],
+			input[type=password],
+			input[type=search],
+			input[type=tel],
+			input[type=text],
+			input[type=time],
+			input[type=url],
+			input[type=week],
+			select,
+			textarea {
+				width: 96%;
+				margin-left: 2%;
+				background-color: rgb(242, 242, 242);
+				margin-bottom: 0;
+			}
+			
+			p.mui-btn,
+			button,
+			input[type=button],
+			input[type=reset],
+			input[type=submit] {
+				font-size: 18px;
+				width: 46%;
+				margin-left: 2%;
+				margin-top: 20px;
+				padding: 12px 12px
+			}
+			
+			.mui-btn,
+			button,
+			input[type=button],
+			input[type=reset],
+			input[type=submit] {
+				padding: 20px 12px;
+			}
+			
+			.mui-table-view-cell {
+				padding: 12px 10px;
+			}
+			
+			.mui-numbox {
+				width: 135px;
+			}
+			
+			.mui-table-view-cell>a:not(.mui-btn) {
+				width: 80%;
+				margin: 0 0 0 0;
+			}
+			
+			.mui-table-view-radio .mui-table-view-cell {
+				padding: 5px 0 5px 10px;
+				line-height: 33px;
+			}
+			
+			.mui-table-view-cell:after {
+				left: 0;
+			}
+		</style>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<h1 class="mui-title" style="color: white; font-weight: bold; font-family: '微软雅黑';">充值</h1>
+		</header>
+		<div class="mui-content">
+			<div class="mui-title" style="text-align: left;">
+				充值金额
+			</div>
+			<p>
+				<input id="txtTotal" type="text" value="0.01" placeholder="按需输入金额,最低一元" style="margin-top: 50px;">
+			</p>
+			<p>
+				<button id="btn10" type="button" class="mui-btn" style="background-color: #007aff; color: white;">
+					10元
+				</button>
+				<button id="btn20" type="button" class="mui-btn">
+					20元
+				</button>
+				<button id="btn50" type="button" class="mui-btn">
+					50元
+				</button>
+				<button id="btn100" type="button" class="mui-btn">
+					100元
+				</button>
+			</p>
+			<h4 class="mui-content-padded">缴费方式:</h4>
+			<ul class="mui-table-view mui-table-view-radio">
+				<li class="mui-table-view-cell mui-selected mui-media">
+					<img class="mui-media-object mui-pull-left" src="images/alipay.png">
+					<a class="mui-navigate-right">
+						支付宝
+					</a>
+				</li>
+				<li class="mui-table-view-cell mui-media">
+					<img class="mui-media-object mui-pull-left" src="images/wxpay.png">
+					<a class="mui-navigate-right">
+						微信支付
+					</a>
+				</li>
+			</ul>
+			<button type="button" id="btnCharge" class="mui-btn mui-btn-primary mui-btn-block">充值</button>
+		</div>
+		<script src="js/mui.min.js"></script>
+		<script src="js/jquery-1.11.0.js" type="text/javascript" charset="utf-8"></script>
+		<script type="text/javascript">
+			mui.init({
+				//设置状态栏颜色
+				statusBarBackground: '#2984D1'
+			});
+
+			var payChanel;
+			var title = '悟空微信支付';
+
+			function getPayChanel(type) {
+				//设备信息加载完成，先获取支持的支付通道
+				plus.payment.getChannels(function(channels) {
+					for(var i in channels) {
+						if(channels[i].id == type) { //默认为微信支付
+							payChanel = channels[i];
+						}
+					}
+				}, function(e) {
+					mui.alert("获取支付通道失败：" + e.message, title);
+				});
+			};
+
+			function payClickNew() {
+				plus.nativeUI.showWaiting("正在处理,请稍后...", {
+					padlock: true
+				});
+
+				//在支付之前,再次确定用户是否变更了支付通道
+				var vTotal = document.getElementById("txtTotal").value;
+				var vPayGoodsName = '充值缴费';
+
+				//支付按钮点击事件
+				var data = null;
+				if(payChanel.id == "wxpay") {
+					vTotal = vTotal * 100; //微信的单位为分
+					data = {
+						method: 'WxPay',
+						orderID: new Date().Format('yyyyMMddhhmmss'),
+						title: vPayGoodsName,
+						money: vTotal,
+						remarks: vPayGoodsName,
+					};
+				} else if(payChanel.id == "alipay") {
+					//检查是否请求订单中
+					data = {
+						method: 'ALiPay',
+						orderID: new Date().Format('yyyyMMddhhmmss'),
+						title: vPayGoodsName,
+						money: vTotal,
+						remarks: vPayGoodsName,
+					};
+				}
+				$.ajax({
+					type: "get",
+					url: "http://wk.lmx.ren/api/APPPay/Pay",
+					async: true,
+					data: data,
+					success: function(res) {
+						plus.nativeUI.closeWaiting();
+						plus.payment.request(payChanel, res, function(result) {
+							console.log(JSON.stringify(result));
+							mui.alert(JSON.stringify(result), title);
+							mui.alert("付费成功", title);
+						}, function(e) {
+							console.log(JSON.stringify(e));
+							alert(JSON.stringify(e));
+							mui.alert("付费失败", title);
+						});
+					}
+				});
+			};			
+			mui.plusReady(function() {
+				getPayChanel('alipay');
+				document.getElementById("btnCharge").addEventListener("tap", payClickNew);
+			});
+			document.querySelector('.mui-table-view.mui-table-view-radio').addEventListener('selected', function(e) {
+				if(e.detail.el.innerText.indexOf('微信支付') > -1) {
+					getPayChanel('wxpay');
+				} else if(e.detail.el.innerText.indexOf('支付宝') > -1) {
+					getPayChanel('alipay');
+				} else {
+					getPayChanel('wxpay');
+				}
+			});
+
+			//绑定按钮的事件
+			document.getElementById("btn10").addEventListener('tap', function() {
+				document.getElementById("txtTotal").value = 10;
+				document.getElementById("btn10").style.backgroundColor = '#007aff';
+				document.getElementById("btn20").style.backgroundColor = '#fff';
+				document.getElementById("btn50").style.backgroundColor = '#fff';
+				document.getElementById("btn100").style.backgroundColor = '#fff';
+				document.getElementById("btn10").style.color = 'white';
+				document.getElementById("btn20").style.color = 'black';
+				document.getElementById("btn50").style.color = 'black';
+				document.getElementById("btn100").style.color = 'black';
+			})
+			//绑定按钮的事件
+			document.getElementById("btn20").addEventListener('tap', function() {
+				document.getElementById("txtTotal").value = 20;
+				document.getElementById("btn10").style.backgroundColor = '#fff';
+				document.getElementById("btn20").style.backgroundColor = '#007aff';
+				document.getElementById("btn50").style.backgroundColor = '#fff';
+				document.getElementById("btn100").style.backgroundColor = '#fff';
+				document.getElementById("btn10").style.color = 'black';
+				document.getElementById("btn20").style.color = 'white';
+				document.getElementById("btn50").style.color = 'black';
+				document.getElementById("btn100").style.color = 'black';
+			});
+			//绑定按钮的事件
+			document.getElementById("btn50").addEventListener('tap', function() {
+				document.getElementById("txtTotal").value = 50;
+				document.getElementById("btn10").style.backgroundColor = '#fff';
+				document.getElementById("btn20").style.backgroundColor = '#fff';
+				document.getElementById("btn50").style.backgroundColor = '#007aff';
+				document.getElementById("btn100").style.backgroundColor = '#fff';
+				document.getElementById("btn10").style.color = 'black';
+				document.getElementById("btn20").style.color = 'black';
+				document.getElementById("btn50").style.color = 'white';
+				document.getElementById("btn100").style.color = 'black';
+			});
+			//绑定按钮的事件
+			document.getElementById("btn100").addEventListener('tap', function() {
+				document.getElementById("txtTotal").value = 100;
+				document.getElementById("btn10").style.backgroundColor = '#fff';
+				document.getElementById("btn20").style.backgroundColor = '#fff';
+				document.getElementById("btn50").style.backgroundColor = '#fff';
+				document.getElementById("btn100").style.backgroundColor = '#007aff';
+				document.getElementById("btn10").style.color = 'black';
+				document.getElementById("btn20").style.color = 'black';
+				document.getElementById("btn50").style.color = 'black';
+				document.getElementById("btn100").style.color = 'white';
+			});
+			// 对Date的扩展，将 Date 转化为指定格式的String
+			// 月(M)、日(d)、小时(h)、分(m)、秒(s)、季度(q) 可以用 1-2 个占位符， 
+			// 年(y)可以用 1-4 个占位符，毫秒(S)只能用 1 个占位符(是 1-3 位的数字) 
+			// 例子： 
+			// (new Date()).Format("yyyy-MM-dd hh:mm:ss.S") ==> 2006-07-02 08:09:04.423 
+			// (new Date()).Format("yyyy-M-d h:m:s.S")      ==> 2006-7-2 8:9:4.18 
+			Date.prototype.Format = function(fmt) { //author: meizz 
+				var o = {
+					"M+": this.getMonth() + 1, //月份 
+					"d+": this.getDate(), //日 
+					"h+": this.getHours(), //小时 
+					"m+": this.getMinutes(), //分 
+					"s+": this.getSeconds(), //秒 
+					"q+": Math.floor((this.getMonth() + 3) / 3), //季度 
+					"S": this.getMilliseconds() //毫秒 
+				};
+				if(/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+				for(var k in o)
+					if(new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+				return fmt;
+			};
+		</script>
+	</body>
+
+</html>
